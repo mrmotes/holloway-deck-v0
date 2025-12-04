@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# bin/unarchive - wrapper to call the project's `unarchive.py`
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "$DIR/../unarchive.py" "$@"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# bin/compile - wrapper to call the project's `compile.py`
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "$DIR/../compile.py" "$@"

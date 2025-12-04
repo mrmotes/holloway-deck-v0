@@ -21,9 +21,20 @@ INFO = f"{BLUE}INFO:{RESET}"
 SUCCESS = f"{GREEN}SUCCESS:{RESET}"
 WARNING = f"{YELLOW}WARNING:{RESET}"
 
-# --- CONFIGURATION (PATHS) ---
-ARCHIVE_DIR = Path(os.path.expanduser("~/writing/archives"))
-SECRETS_PATH = Path(os.path.expanduser("~/.config/cyberdeck-1.0/secrets.json"))
+# --- CONFIGURATION (PATHS & ENV) ---
+# repo root (helpers.py parent)
+REPO_ROOT = Path(__file__).resolve().parent
+
+# XDG / config locations
+XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+CONFIG_DIR = Path(os.environ.get("HOLLOWAY_CONFIG_DIR", os.path.join(XDG_CONFIG_HOME, "holloway-deck")))
+SECRETS_PATH = CONFIG_DIR / "secrets.json"
+
+# Base install/location for writing data. Prefer environment override, otherwise use repo root.
+HOLLOWAY_HOME = Path(os.environ.get("HOLLOWAY_HOME", str(REPO_ROOT)))
+
+# Archive location (under the holloway home by default)
+ARCHIVE_DIR = Path(HOLLOWAY_HOME) / "writing" / "archives"
 
 # --- CONFIGURATION (YAML) ---
 yaml = YAML()
@@ -95,10 +106,12 @@ class LayerConfig:
 
 
 # Define available layers (order matters: lower index = lower in hierarchy)
+_writing_base = Path(HOLLOWAY_HOME) / "writing"
+
 LAYERS = {
-    "drafts": LayerConfig("drafts", "~/writing/drafts"),
-    "scenes": LayerConfig("scenes", "~/writing/scenes"),
-    "chapters": LayerConfig("chapters", "~/writing/chapters"),
+    "drafts": LayerConfig("drafts", str(_writing_base / "drafts")),
+    "scenes": LayerConfig("scenes", str(_writing_base / "scenes")),
+    "chapters": LayerConfig("chapters", str(_writing_base / "chapters")),
 }
 
 
