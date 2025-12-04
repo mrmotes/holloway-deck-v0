@@ -18,21 +18,21 @@ EDITOR = "nvim"
 def main():
     parser = argparse.ArgumentParser(
         prog="draft",
-        description="create a new draft for writing",
+        description="create a new draft file or open an existing one",
         add_help=True
     )
     parser.add_argument(
         "filename",
         nargs="?",
         default=None,
-        help="filename for the draft (default: today's date)"
+        help="filename for the draft (default: today's date is ISO format 'yyyy-mm-dd.md')"
     )
     parser.add_argument(
-        "word_count",
+        "word_count_goal",
         nargs="?",
         type=int,
         default=500,
-        help="word count goal (default: 500)"
+        help="the word count goal for the file (default: 500)"
     )
     
     parsed_args = parser.parse_args()
@@ -57,10 +57,10 @@ def main():
         try:
             metadata = {
                 "aliases": [],
-                "afterlife": "",
+                "afterlife": None,
                 "is_dead": False,
                 "type": ["draft"],
-                "summary": "",
+                "summary": None,
                 "word_count_goal": word_count_goal,
                 "word_count": 0,
             }

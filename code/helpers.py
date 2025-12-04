@@ -44,6 +44,7 @@ ARCHIVE_DIR = Path(HOLLOWAY_HOME) / "writing" / "archives"
 yaml = YAML()
 yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=4, offset=2)
+yaml.default_flow_style = False
 
 # --- CONFIGURATION (REMOTE) ---
 REMOTE_USER = ""
@@ -99,10 +100,10 @@ class LayerConfig:
         """Create a markdown file with standard YAML structure for this layer."""
         metadata = {
             "aliases": [title] if title else [],
-            "afterlife": "",
+            "afterlife": None,
             "is_dead": False,
             "type": [self.name],
-            "summary": summary,
+            "summary": summary if summary else None,
             "word_count_goal": 0,
             "word_count": len(body.split()) if body else 0,
         }
