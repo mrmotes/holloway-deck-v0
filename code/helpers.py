@@ -108,6 +108,16 @@ class LayerConfig:
             "word_count": len(body.split()) if body else 0,
         }
         write_markdown_file(filepath, metadata, body)
+    
+    def select_file(self, multi: bool = False, prompt: str = None) -> list:
+        """fzf-based selection of live files in this layer."""
+        from .helpers import select_items_fzf  # avoid circular import if used from other scripts
+        files = self.get_files(exclude_dead=True)
+        if not files:
+            print(f"    -> {WARNING} no live {self.name} files found")
+            return []
+        prompt_str = prompt or f"select {self.name} to edit > "
+        return select_items_fzf(files, multi=multi, prompt=prompt_str)
 
 
 # Define available layers (order matters: lower index = lower in hierarchy)

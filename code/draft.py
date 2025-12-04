@@ -35,12 +35,33 @@ def main():
         default=500,
         help="the word count goal for the file (default: 500)"
     )
-    
+    parser.add_argument(
+        "-s", "--select",
+        action="store_true",
+        help="open fzf to select and edit a live draft"
+    )
+
     parsed_args = parser.parse_args()
-    
+
     # ensure directory exists
     drafts_layer = LAYERS["drafts"]
     drafts_layer.ensure_exists()
+
+    # --select mode: open fzf to pick a draft
+    if parsed_args.select:
+        selected = drafts_layer.select_file(multi=False)
+        if not selected:
+            print(f"    -> {INFO} no draft selected")
+            sys.exit(0)
+        file_path = drafts_layer.directory / selected[0]
+        print(f"    -> {INFO} opening draft: {file_path.name}")
+        try:
+            subprocess.call([EDITOR, str(file_path)])
+        except FileNotFoundError:
+            print(f"    -> {FAILURE} editor not found: {EDITOR}")
+            sys.exit(1)
+        update_word_count(file_path)
+        sys.exit(0)
 
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
