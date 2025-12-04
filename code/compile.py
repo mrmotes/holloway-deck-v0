@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 from helpers import (
-    RED, GREEN, BLUE, RESET,
+    FAILURE, INFO, SUCCESS,
     ARCHIVE_DIR, REMOTE_USER, REMOTE_IP, REMOTE_PATH,
     LAYERS,
     select_items_fzf,
@@ -49,9 +49,9 @@ def transfer_file_to_holloway(filepath):
     result = subprocess.call(["scp", "-q", "-B", str(filepath), remote_destination])
     
     if result == 0:
-        print(f"    -> {GREEN}SUCCESS:{RESET} file transferred to holloway: {filepath.name}")
+        print(f"    -> {SUCCESS} file transferred to holloway: {filepath.name}")
     else:
-        print(f"    -> {RED}FAILURE:{RESET} scp exit-code: {result}")
+        print(f"    -> {FAILURE} scp exit-code: {result}")
         sys.exit(1)
 
 
@@ -61,12 +61,12 @@ def archive_and_transfer(filepath):
 
     try:
         shutil.copy2(filepath, archive_path)
-        print(f"    -> {GREEN}SUCCESS:{RESET} file archived locally: {archive_path.name}")
+        print(f"    -> {SUCCESS} file archived locally: {archive_path.name}")
         transfer_file_to_holloway(archive_path)
         os.remove(filepath)
-        print(f"    -> {GREEN}SUCCESS:{RESET} file deleted locally: {filepath.name}")
+        print(f"    -> {SUCCESS} file deleted locally: {filepath.name}")
     except Exception as e:
-        print(f"    -> {RED}ERROR:{RESET} error archiving {filepath.name}: {e}")
+        print(f"    -> {FAILURE} error archiving {filepath.name}: {e}")
         sys.exit(1)
 
 
@@ -75,9 +75,9 @@ def update_source_metadata(filepath, target_name: str, target_filename: str):
     metadata, body = parse_markdown_yaml(filepath)
     metadata["is_dead"] = True
     link_name = target_filename.replace(".md", "")
-    metadata["afterlife"] = f'"[[{link_name}]]"'
+    metadata["afterlife"] = f"[[{link_name}]]"
     write_markdown_file(filepath, metadata, body)
-    print(f"    -> {GREEN}SUCCESS:{RESET} metadata updated: {filepath.name}")
+    print(f"    -> {SUCCESS} metadata updated: {filepath.name}")
 
 
 def create_new_target(target_layer, title: str, summaries: list, bodies: list, 
@@ -85,18 +85,19 @@ def create_new_target(target_layer, title: str, summaries: list, bodies: list,
     """Create a new file in target layer."""
     safe_filename = sanitize_filename(title)
     target_path = target_layer.directory / safe_filename
-    
+
     summary = " ".join(summaries)
     body = "\n\n".join(bodies)
-    
+
+    # Pass raw title for aliases, sanitized for filename
     target_layer.create_file_from_body(target_path, body, title=title, summary=summary)
-    
+
     # Update word counts after file creation
     metadata, file_body = parse_markdown_yaml(target_path)
     metadata["word_count_goal"] = total_word_count_goal
     metadata["word_count"] = total_word_count
     write_markdown_file(target_path, metadata, file_body)
-    
+
     return target_path, safe_filename
 
 
@@ -106,10 +107,10 @@ def append_to_target(target_layer, target_filename: str, summaries: list, bodies
     target_path = target_layer.directory / target_filename
     
     if not target_path.exists():
-        print(f"    -> {RED}FAILURE:{RESET} target file {target_filename} not found")
+        print(f"    -> {FAILURE} target file {target_filename} not found")
         sys.exit(1)
     
-    print(f"    -> {BLUE}INFO:{RESET} parsing existing {target_layer.name}: {target_filename}...")
+    print(f"    -> {INFO} parsing existing {target_layer.name}: {target_filename}...")
     metadata, body = parse_markdown_yaml(target_path)
     
     new_word_count = metadata.get("word_count", 0) + total_word_count
@@ -129,8 +130,8 @@ def compile_layers(source_layer, target_layer):
     """Compile from source layer to target layer."""
     # Validate transition
     if not validate_layer_transition(source_layer.name, target_layer.name):
-        print(f"    -> {RED}FAILURE:{RESET} invalid layer transition: {source_layer.name} -> {target_layer.name}")
-        print(f"    -> {BLUE}INFO:{RESET} available layers in order: {', '.join(get_available_layers())}")
+        print(f"    -> {FAILURE} invalid layer transition: {source_layer.name} -> {target_layer.name}")
+        print(f"    -> {INFO} available layers in order: {', '.join(get_available_layers())}")
         sys.exit(1)
     
     # Ensure directories exist
@@ -157,7 +158,7 @@ def compile_layers(source_layer, target_layer):
                                              prompt=f"select {target_layer.name} to append to -> ")
     
     if not selected_target_files:
-        print(f"    -> {BLUE}INFO:{RESET} ABORTING: no target selected")
+        print(f"    -> {INFO} ABORTING: no target selected")
         sys.exit(0)
     
     selected_target_file = selected_target_files[0]
@@ -193,16 +194,16 @@ def compile_layers(source_layer, target_layer):
             sys.exit(0)
         
         if not target_title:
-            print(f"    -> {RED}FAILURE:{RESET} {target_layer.name} title is required for NEW {target_layer.name}")
+            print(f"    -> {FAILURE} {target_layer.name} title is required for NEW {target_layer.name}")
             sys.exit(1)
         
         final_path, final_filename = create_new_target(target_layer, target_title, summaries, 
                                                        bodies, total_word_count, total_word_count_goal)
-        print(f"    -> {GREEN}SUCCESS:{RESET} created NEW {target_layer.name}: {final_filename}")
+        print(f"    -> {SUCCESS} created NEW {target_layer.name}: {final_filename}")
     else:
         final_path, final_filename = append_to_target(target_layer, selected_target_file, summaries,
                                                       bodies, total_word_count, total_word_count_goal)
-        print(f"    -> {GREEN}SUCCESS:{RESET} appended to {target_layer.name}: {final_filename}")
+        print(f"    -> {SUCCESS} appended to {target_layer.name}: {final_filename}")
     
     print("-" * 30)
     
@@ -223,7 +224,7 @@ def compile_layers(source_layer, target_layer):
         print(f"opening {final_filename} in nvim...")
         subprocess.call(["nvim", str(final_path)])
     else:
-        print(f"{BLUE}INFO:{RESET} {target_layer.name} compile complete!")
+        print(f"{INFO} {target_layer.name} compile complete!")
 
 
 def main():
@@ -233,8 +234,8 @@ def main():
         target_name = sys.argv[2]
         
         if source_name not in LAYERS or target_name not in LAYERS:
-            print(f"    -> {RED}FAILURE:{RESET} unknown layer")
-            print(f"    -> {BLUE}INFO:{RESET} available layers: {', '.join(get_available_layers())}")
+            print(f"    -> {FAILURE} unknown layer")
+            print(f"    -> {INFO} available layers: {', '.join(get_available_layers())}")
             sys.exit(1)
         
         source_layer = LAYERS[source_name]
@@ -251,7 +252,7 @@ def main():
             sys.exit(0)
         
         if source_name not in LAYERS or target_name not in LAYERS:
-            print(f"    -> {RED}FAILURE:{RESET} unknown layer")
+            print(f"    -> {FAILURE} unknown layer")
             sys.exit(1)
         
         source_layer = LAYERS[source_name]
