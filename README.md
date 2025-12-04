@@ -1,7 +1,7 @@
 # Holloway Deck
 Holloway is a writerdeck inspired by a science-fiction novel I am writing. It is not _just_ a distraction-free writing machine; it's a means of bringing the world of my novel to me. One of the core themes of the book is the decentralization of data as an act of revolution against a technocratic monarchy. What does an uprising look like when castles become data centers? Thus this project. It does only a few things specific to my needs, but perhaps this is something someone else might be interested in.
 
-> [!warning] Caveats
+> [!WARNING]
 > 1. This is made for me and my particular set up on my Raspberry Pi 4 running DietPi. As such, it is highly opinionated to this set up.
 > 2. I am a creative first and an engineer second (or third or fourth... you get the idea), so forgive me.
 > 3. Per the previous caveats, much of this will likely not work for _you_ right out of the box without significant configuration.

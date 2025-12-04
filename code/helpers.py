@@ -30,8 +30,12 @@ XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.confi
 CONFIG_DIR = Path(os.environ.get("HOLLOWAY_CONFIG_DIR", os.path.join(XDG_CONFIG_HOME, "holloway-deck")))
 SECRETS_PATH = CONFIG_DIR / "secrets.json"
 
-# Base install/location for writing data. Prefer environment override, otherwise use repo root.
-HOLLOWAY_HOME = Path(os.environ.get("HOLLOWAY_HOME", str(REPO_ROOT)))
+# XDG / data locations (for writing files, archives, etc.)
+XDG_DATA_HOME = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
+DATA_DIR = Path(os.environ.get("HOLLOWAY_DATA_HOME", os.path.join(XDG_DATA_HOME, "holloway-deck")))
+
+# Base install/location for writing data. Prefer environment override, otherwise use XDG data dir.
+HOLLOWAY_HOME = Path(os.environ.get("HOLLOWAY_HOME", str(DATA_DIR)))
 
 # Archive location (under the holloway home by default)
 ARCHIVE_DIR = Path(HOLLOWAY_HOME) / "writing" / "archives"
