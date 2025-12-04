@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+from ruamel.yaml import YAML
+
+# --- COLORS ---
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
+BLUE = "\033[94m"
+
+# --- CONFIGURATION (LOGS) ---
+FAILURE = f"{RED}FAILURE:{RESET}"
+INFO = f"{BLUE}INFO:{RESET}"
+SUCCESS = f"{GREEN}SUCCESS:{RESET}"
+WARNING = f"{YELLOW}WARNING:{RESET}"
+
+# --- CONFIGURATION (PATHS) ---
+ARCHIVE_DIR = Path(os.path.expanduser("~/writing/archives"))
+SECRETS_PATH = Path(os.path.expanduser("~/.config/cyberdeck-1.0/secrets.json"))
+
+# --- CONFIGURATION (YAML) ---
+yaml = YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=4, offset=2)
+
+# --- CONFIGURATION (REMOTE) ---
+REMOTE_USER = ""
+REMOTE_IP = ""
+REMOTE_PATH = ""
+
+if SECRETS_PATH.exists():
+    try:
+        with open(SECRETS_PATH, "r") as file:
+            secrets = json.load(file)
+            REMOTE_USER = secrets.get("REMOTE_USER", "")
+            REMOTE_IP = secrets.get("REMOTE_IP", "")
+            REMOTE_PATH = secrets.get("REMOTE_PATH", "")
+    except Exception as e:
+        print(f"    -> {FAILURE} could not load secrets file: {e}")
+        sys.exit(1)
+else:
+    print(f"    -> {FAILURE} no secrets file found at {SECRETS_PATH}")
+    sys.exit(1)
+
+
+# --- LAYER SYSTEM ---
+class LayerConfig:
+    """configuration for a writing layer (drafts, scenes, chapters, etc.)"""
+    
+    def __init__(self, name: str, directory: str, template_path: str):
+        self.name = name
+        self.directory = self._expand_path(directory)
+        self.template_path = self._expand_path(template_path)
+        # metadata field that links to the parent layer
+        self.parent_field = "afterlife"
+    
+    @staticmethod
+    def _expand_path(path_str: str) -> Path:
+        """Convert a path string to a Path object, expanding ~ notation."""
+        return Path(os.path.expanduser(path_str))
+    
+    def ensure_exists(self):
+        """create directory if it doesn't exist"""
+        self.directory.mkdir(parents=True, exist_ok=True)
+    
+    def get_files(self, exclude_dead: bool = True) -> list:
+        """get list of files in this layer"""
+        if not self.directory.exists():
+            print(f"    -> {FAILURE} {self.name} dir does not exist at {self.directory}")
+            sys.exit(1)
+        
+        files = sorted(self.directory.glob("*.md"))
+        if exclude_dead:
+            files = [f for f in files if is_not_dead(f)]
+        return [f.name for f in files]
+
+
+# Define available layers (order matters: lower index = lower in hierarchy)
+LAYERS = {
+    "drafts": LayerConfig("drafts", "~/writing/drafts", "~/.local/templates/draft_template.md"),
+    "scenes": LayerConfig("scenes", "~/writing/scenes", "~/.local/templates/scene_template.md"),
+    "chapters": LayerConfig("chapters", "~/writing/chapters", "~/.local/templates/chapter_template.md"),
+}
+
+
+# --- UTILITY FUNCTIONS ---
+
+def sanitize_filename(text: str) -> str:
+    """Convert text to a safe markdown filename."""
+    safe = re.sub(r'[^a-z0-9]', '-', text.lower()).strip('-')
+    safe = re.sub(r'-+', '-', safe)
+    return safe + ".md"
+
+
+def is_not_dead(file: Path) -> bool:
+    """Check if a markdown file is not marked as dead."""
+    try:
+        with open(file, "r") as f:
+            head = f.read(1000)
+        return "is_dead: true" not in head
+    except (OSError, IOError, UnicodeDecodeError):
+        return False
+
+
+def select_items_fzf(items: list, multi: bool = False, prompt: str = "select > ") -> list:
+    """Interactive selection using fzf."""
+    if not items:
+        print(f"    -> {WARNING} no items available...")
+        sys.exit(0)
+
+    args = ["fzf", "--prompt", prompt, "--height=40%", "--reverse"]
+
+    if multi:
+        args.append("-m")
+
+    fzf = subprocess.Popen(
+        args,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True
+    )
+
+    input_str = "\n".join(items)
+    stdout, _ = fzf.communicate(input=input_str)
+    
+    if fzf.returncode != 0 or not stdout.strip():
+        print(f"    -> {INFO} ABORTING: no files selected...")
+        sys.exit(0)
+        
+    return [x for x in stdout.split('\n') if x]
+
+
+def parse_metadata_header(filepath: Path) -> tuple:
+    """Extract YAML metadata and body from markdown file."""
+    try:
+        with open(filepath, "r") as file:
+            content = file.read()
+        
+        parts = re.split(r'^---$', content, flags=re.MULTILINE)
+        if len(parts) >= 3:
+            metadata = yaml.load(parts[1])
+            body = parts[2].strip()
+            return metadata, body
+    except Exception:
+        pass
+    return {}, ""
+
+
+def parse_markdown_yaml(filepath: Path) -> tuple:
+    """Parse markdown file and return (metadata, body)."""
+    with open(filepath, "r") as file:
+        file_content = file.read()
+    
+    file_parts = re.split(r'^---$', file_content, flags=re.MULTILINE)
+    
+    if not len(file_parts) == 3:
+        print(f"    -> {FAILURE} too many or too few instances of '---' in file content: {filepath.name}")
+        sys.exit(1)
+    
+    frontmatter = file_parts[1]
+    body = file_parts[2]
+    metadata = yaml.load(frontmatter)
+
+    if not metadata:
+        print(f"    -> {FAILURE} issue loading yaml: {frontmatter}")
+        sys.exit(1)
+
+    return metadata, body.strip()
+
+
+def write_markdown_file(filepath: Path, metadata: dict, body: str) -> None:
+    """Write metadata and body to markdown file."""
+    with open(filepath, "w") as file:
+        file.write("---\n")
+        yaml.dump(metadata, file)
+        file.write("---\n\n")
+        file.write(body)
+
+
+def create_markdown_from_template(filepath: Path, template_path: Path, replacements: dict) -> None:
+    """Create a markdown file from template with replacements."""
+    if not template_path.exists():
+        print(f"    -> {FAILURE} template not found at {template_path}")
+        sys.exit(1)
+
+    with open(template_path, "r") as template:
+        content = template.read()
+
+    for key, value in replacements.items():
+        content = content.replace(f"{{{key}}}", str(value))
+
+    with open(filepath, "w") as file:
+        file.write(content)
