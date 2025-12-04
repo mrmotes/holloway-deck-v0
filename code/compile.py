@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""
-Dynamic layer compilation tool for cyberdeck.
-Compile from any lower layer to any upper layer.
 
-Usage:
-    compile.py                           # Interactive mode
-    compile.py [source_layer] [target_layer]  # Direct mode
-"""
-
-from importlib.metadata import requires
 import os
 import shutil
 import subprocess
@@ -21,7 +12,6 @@ from helpers import (
     select_items_fzf,
     parse_markdown_yaml,
     write_markdown_file,
-    sanitize_filename,
 )
 
 
