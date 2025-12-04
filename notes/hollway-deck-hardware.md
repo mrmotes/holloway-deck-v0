@@ -3,6 +3,8 @@
 > **Vision**
 > A portable, distraction-free "modern typewriter" built inside a rugged case. The machine functions as a single-purpose appliance for longform writing, offering a high-aesthetic CLI environment (Ghostty + Neovim) without the overhead of a desktop OS. "Infrastructure as Code" via NixOS. The entire machine state should be public and replicable, while personal data and secrets are decoupled.
 
+Below is a list of hardware and software that I plan on using the build out the next version of my Holloway Deck. I will add my current architecture at a later point.
+
 ## Hardware architecture
 
 | Component | Selection | Status | Specs & Notes |
