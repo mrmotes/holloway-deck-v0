@@ -26,7 +26,7 @@ def get_grouped_archives():
     grouped_data = {}
 
     for filepath in sorted(ARCHIVE_DIR.glob("*.md")):
-        metadata = parse_metadata_header(filepath)
+        metadata, _ = parse_metadata_header(filepath)
         afterlife = metadata.get('afterlife', '')
         
         # extract scene name from "[[scene_name]]"
