@@ -96,10 +96,12 @@ class LayerConfig:
             files = [f for f in files if is_not_dead(f)]
         return [f.name for f in files]
     
-    def create_file_from_body(self, filepath: Path, body: str, title: str = "", summary: str = "") -> None:
+    def create_file_from_body(self, body: str, title: str = "", summary: str = "") -> None:
         """Create a markdown file with standard YAML structure for this layer."""
+        sanitized_filename, requires_alias = sanitize_filename(title)
+        filepath = self.directory / sanitized_filename
         metadata = {
-            "aliases": [title] if title else [],
+            "aliases": [title] if requires_alias else [],
             "afterlife": None,
             "is_dead": False,
             "type": [self.name],
@@ -108,6 +110,7 @@ class LayerConfig:
             "word_count": len(body.split()) if body else 0,
         }
         write_markdown_file(filepath, metadata, body)
+        return filepath
     
     def select_file(self, multi: bool = False, prompt: str = None) -> list:
         """fzf-based selection of live files in this layer."""

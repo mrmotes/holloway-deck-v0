@@ -8,6 +8,7 @@ Usage:
     compile.py [source_layer] [target_layer]  # Direct mode
 """
 
+from importlib.metadata import requires
 import os
 import shutil
 import subprocess
@@ -83,14 +84,11 @@ def update_source_metadata(filepath, target_name: str, target_filename: str):
 def create_new_target(target_layer, title: str, summaries: list, bodies: list, 
                       total_word_count: int, total_word_count_goal: int) -> tuple:
     """Create a new file in target layer."""
-    safe_filename = sanitize_filename(title)
-    target_path = target_layer.directory / safe_filename
-
     summary = " ".join(summaries)
     body = "\n\n".join(bodies)
 
     # Pass raw title for aliases, sanitized for filename
-    target_layer.create_file_from_body(target_path, body, title=title, summary=summary)
+    target_path = target_layer.create_file_from_body(body=body, title=title, summary=summary)
 
     # Update word counts after file creation
     metadata, file_body = parse_markdown_yaml(target_path)
@@ -98,7 +96,7 @@ def create_new_target(target_layer, title: str, summaries: list, bodies: list,
     metadata["word_count"] = total_word_count
     write_markdown_file(target_path, metadata, file_body)
 
-    return target_path, safe_filename
+    return target_path, target_path.name
 
 
 def append_to_target(target_layer, target_filename: str, summaries: list, bodies: list,
