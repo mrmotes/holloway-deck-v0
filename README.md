@@ -18,19 +18,18 @@ python compile.py
 
 To add a new layer (e.g., "parts", "books", "series"), edit `helpers.py`:
 
-1. Create the directory constant (or let it use the default `~/writing/LAYER_NAME`)
-2. Add to the `LAYERS` dict in `helpers.py`:
+Simply add a new entry to the `LAYERS` dict in `helpers.py`:
 
 ```python
 LAYERS = {
-    "drafts": LayerConfig("drafts", "~/writing/drafts", "~/.local/templates/draft_template.md"),
-    "scenes": LayerConfig("scenes", "~/writing/scenes", "~/.local/templates/scene_template.md"),
-    "chapters": LayerConfig("chapters", "~/writing/chapters", "~/.local/templates/chapter_template.md"),
-    "LAYER_NAME": LayerConfig("LAYER_NAME", "~/writing/LAYER_NAME", "~/.local/templates/LAYER_NAME_template.md")
+    "drafts": LayerConfig("drafts", "~/writing/drafts"),
+    "scenes": LayerConfig("scenes", "~/writing/scenes"),
+    "chapters": LayerConfig("chapters", "~/writing/chapters"),
+    "parts": LayerConfig("parts", "~/writing/parts"),  # new layer
 }
 ```
 
-3. Create the template file at `~/.local/templates/LAYER_NAME_template.md`
+That's it! No template files needed. The YAML structure is generated programmatically.
 
 ## LAYER HIERARCHY
 
@@ -47,58 +46,46 @@ afterlife: "[[parent_item_name]]"
 
 ## METADATA FIELDS
 
-Each layer file uses these YAML fields:
+Each layer file uses a standardized YAML structure. All files have the same fields:
 - `aliases`: list (alternative names for the file)
-- `afterlife`: "[[parent_name]]" (links to parent)
-- `is_dead`: true/false (marks as consumed)
-- `type`: list (draft, scene, chapter, etc.)
+- `afterlife`: string (links to parent layer via `[[parent_name]]`)
+- `is_dead`: boolean (marks as consumed/archived)
+- `type`: list (singular layer name, e.g., `[draft]`, `[scene]`, `[chapter]`)
 - `summary`: string (short description)
 - `word_count_goal`: integer (target word count)
-- `word_count`: integer (auto-updated after editing)
+- `word_count`: integer (auto-calculated from body)
 
-## TEMPLATE VARIABLES
+### Example YAML Structure
 
-Templates support these replacement variables (customize per template):
-- `{LAYER_TITLE}` - the title (e.g., `{CHAPTER_TITLE}`)
-- `{SUMMARY}` - aggregated summary from child items
-- `{WORD_COUNT}` - aggregated word count
-- `{WORD_COUNT_GOAL}` - aggregated word count goal
-- `{LAYER_BODY}` - aggregated body content (e.g., `{CHAPTER_BODY}`)
+```yaml
+---
+aliases:
+  - Alternative Title
+afterlife: "[[parent-layer-item]]"
+is_dead: false
+type:
+  - draft
+summary: A brief description of this item
+word_count_goal: 500
+word_count: 235
+---
+```
 
-The system provides fallback names:
-- `{TITLE}` - same as `{LAYER_TITLE}`
-- `{BODY}` - same as `{LAYER_BODY}`
+The `type` field is automatically set to the layer name when creating new files.
 
 ## EXAMPLE: Creating a "parts" layer
 
-1. Edit `helpers.py` and add:
+1. Edit `helpers.py` and add to the `LAYERS` dict:
 ```python
-# In LAYERS dict:
-"parts": LayerConfig("parts", "~/writing/parts", "~/.local/templates/part_template.md"),
+"parts": LayerConfig("parts", "~/writing/parts"),
 ```
 
-2. Create `~/.local/templates/part_template.md`:
-```markdown
----
-aliases: 
-afterlife: ""
-is_dead: false
-type:
-  - part
-summary: {SUMMARY}
-word_count_goal: {WORD_COUNT_GOAL}
-word_count: {WORD_COUNT}
----
-
-# {PART_TITLE}
-
-{PART_BODY}
-```
-
-3. Use it:
+2. Use it:
 ```bash
 python compile.py chapters parts
 ```
+
+That's all! When you create a new part by compiling chapters into it, the YAML will be automatically generated with `type: [part]` and all required fields.
 
 ## UNARCHIVE SYSTEM
 
@@ -110,6 +97,7 @@ The `unarchive.py` script works with any layer:
 ## FILES
 
 - `compile.py` - Main compilation script (dynamic, layer-agnostic)
-- `draft.py` - Create new draft files
+- `writing_draft.py` - Create new draft files
+- `draft.py` - Legacy alternative for creating drafts
 - `unarchive.py` - Decompile and restore archived items
-- `helpers.py` - Shared utilities and layer definitions
+- `helpers.py` - Shared utilities, layer definitions, and YAML structure

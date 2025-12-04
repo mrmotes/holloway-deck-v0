@@ -9,7 +9,6 @@ from helpers import (
     LAYERS,
     parse_metadata_header,
     write_markdown_file,
-    create_markdown_from_template
 )
 
 EDITOR = "nvim"
@@ -51,8 +50,16 @@ def main():
         print(f"    -> {INFO} draft: {file_path.name}")
 
         try:
-            replacements = {"word_count_goal": word_count_goal}
-            create_markdown_from_template(file_path, drafts_layer.template_path, replacements)
+            metadata = {
+                "aliases": [],
+                "afterlife": "",
+                "is_dead": False,
+                "type": ["draft"],
+                "summary": "",
+                "word_count_goal": int(word_count_goal),
+                "word_count": 0,
+            }
+            write_markdown_file(file_path, metadata, "")
         except IOError as e:
             print(f"    -> {FAILURE} issue creating file: {e}")
             sys.exit(1)

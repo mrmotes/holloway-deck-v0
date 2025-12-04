@@ -54,10 +54,9 @@ else:
 class LayerConfig:
     """configuration for a writing layer (drafts, scenes, chapters, etc.)"""
     
-    def __init__(self, name: str, directory: str, template_path: str):
+    def __init__(self, name: str, directory: str):
         self.name = name
         self.directory = self._expand_path(directory)
-        self.template_path = self._expand_path(template_path)
         # metadata field that links to the parent layer
         self.parent_field = "afterlife"
     
@@ -80,13 +79,26 @@ class LayerConfig:
         if exclude_dead:
             files = [f for f in files if is_not_dead(f)]
         return [f.name for f in files]
+    
+    def create_file_from_body(self, filepath: Path, body: str, title: str = "", summary: str = "") -> None:
+        """Create a markdown file with standard YAML structure for this layer."""
+        metadata = {
+            "aliases": [title] if title else [],
+            "afterlife": "",
+            "is_dead": False,
+            "type": [self.name],
+            "summary": summary,
+            "word_count_goal": 0,
+            "word_count": len(body.split()) if body else 0,
+        }
+        write_markdown_file(filepath, metadata, body)
 
 
 # Define available layers (order matters: lower index = lower in hierarchy)
 LAYERS = {
-    "drafts": LayerConfig("drafts", "~/writing/drafts", "~/.local/templates/draft_template.md"),
-    "scenes": LayerConfig("scenes", "~/writing/scenes", "~/.local/templates/scene_template.md"),
-    "chapters": LayerConfig("chapters", "~/writing/chapters", "~/.local/templates/chapter_template.md"),
+    "drafts": LayerConfig("drafts", "~/writing/drafts"),
+    "scenes": LayerConfig("scenes", "~/writing/scenes"),
+    "chapters": LayerConfig("chapters", "~/writing/chapters"),
 }
 
 
@@ -182,19 +194,3 @@ def write_markdown_file(filepath: Path, metadata: dict, body: str) -> None:
         yaml.dump(metadata, file)
         file.write("---\n\n")
         file.write(body)
-
-
-def create_markdown_from_template(filepath: Path, template_path: Path, replacements: dict) -> None:
-    """Create a markdown file from template with replacements."""
-    if not template_path.exists():
-        print(f"    -> {FAILURE} template not found at {template_path}")
-        sys.exit(1)
-
-    with open(template_path, "r") as template:
-        content = template.read()
-
-    for key, value in replacements.items():
-        content = content.replace(f"{{{key}}}", str(value))
-
-    with open(filepath, "w") as file:
-        file.write(content)

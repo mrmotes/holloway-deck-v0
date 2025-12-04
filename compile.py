@@ -20,7 +20,6 @@ from helpers import (
     select_items_fzf,
     parse_markdown_yaml,
     write_markdown_file,
-    create_markdown_from_template,
     sanitize_filename,
 )
 
@@ -90,18 +89,14 @@ def create_new_target(target_layer, title: str, summaries: list, bodies: list,
     summary = " ".join(summaries)
     body = "\n\n".join(bodies)
     
-    replacements = {
-        f"{target_layer.name.upper()}_TITLE": title,
-        "SUMMARY": summary,
-        "WORD_COUNT_GOAL": str(total_word_count_goal),
-        "WORD_COUNT": str(total_word_count),
-        f"{target_layer.name.upper()}_BODY": body,
-        # Fallback names for template flexibility
-        "TITLE": title,
-        "BODY": body,
-    }
+    target_layer.create_file_from_body(target_path, body, title=title, summary=summary)
     
-    create_markdown_from_template(target_path, target_layer.template_path, replacements)
+    # Update word counts after file creation
+    metadata, file_body = parse_markdown_yaml(target_path)
+    metadata["word_count_goal"] = total_word_count_goal
+    metadata["word_count"] = total_word_count
+    write_markdown_file(target_path, metadata, file_body)
+    
     return target_path, safe_filename
 
 
