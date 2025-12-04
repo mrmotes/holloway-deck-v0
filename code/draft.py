@@ -45,6 +45,8 @@ def main():
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
     sanitized_filename = sanitize_filename(filename_str)
+    requires_alias = sanitized_filename != filename_str
+    
     word_count_goal = parsed_args.word_count_goal
 
     if not sanitized_filename.endswith(".md"):
@@ -58,7 +60,7 @@ def main():
 
         try:
             metadata = {
-                "aliases": [filename_str],
+                "aliases": [filename_str] if requires_alias else [],
                 "afterlife": None,
                 "is_dead": False,
                 "type": ["draft"],
