@@ -9,6 +9,7 @@ from helpers import (
     FAILURE, INFO,
     LAYERS,
     parse_metadata_header,
+    sanitize_filename,
     write_markdown_file,
 )
 
@@ -47,6 +48,8 @@ def main():
 
     if not filename_str.endswith(".md"):
         filename_str += ".md"
+
+    filename_str = sanitize_filename(filename_str)
 
     file_path = drafts_layer.directory / filename_str
 
