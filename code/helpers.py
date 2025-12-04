@@ -22,8 +22,8 @@ SUCCESS = f"{GREEN}SUCCESS:{RESET}"
 WARNING = f"{YELLOW}WARNING:{RESET}"
 
 # --- CONFIGURATION (PATHS & ENV) ---
-# repo root (helpers.py parent)
-REPO_ROOT = Path(__file__).resolve().parent
+# repo root (parent of code/ directory where helpers.py lives)
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # XDG / config locations
 XDG_CONFIG_HOME = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
