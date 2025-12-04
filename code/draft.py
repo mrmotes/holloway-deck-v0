@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import argparse
 import subprocess
 import datetime
 
@@ -15,30 +16,34 @@ EDITOR = "nvim"
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog="draft",
+        description="create a new draft for writing",
+        add_help=True
+    )
+    parser.add_argument(
+        "filename",
+        nargs="?",
+        default=None,
+        help="filename for the draft (default: today's date)"
+    )
+    parser.add_argument(
+        "word_count",
+        nargs="?",
+        type=int,
+        default=500,
+        help="word count goal (default: 500)"
+    )
+    
+    parsed_args = parser.parse_args()
+    
     # ensure directory exists
     drafts_layer = LAYERS["drafts"]
     drafts_layer.ensure_exists()
 
     # default values
-    filename_str = datetime.date.today().isoformat()
-    word_count_goal = "500"
-    
-    # argument parsing
-    args = sys.argv[1:]
-    
-    if args:
-        first_arg = args[0]
-
-        # CASE 1: word count goal
-        if first_arg.isdigit():
-            word_count_goal = first_arg
-
-        # CASE 2: filename
-        else:
-            filename_str = first_arg
-
-            if len(args) > 1 and args[1].isdigit():
-                word_count_goal = args[1]
+    filename_str = parsed_args.filename or datetime.date.today().isoformat()
+    word_count_goal = parsed_args.word_count
 
     if not filename_str.endswith(".md"):
         filename_str += ".md"
@@ -47,7 +52,7 @@ def main():
 
     # file creation
     if not file_path.exists() or file_path.stat().st_size == 0:
-        print(f"    -> {INFO} draft: {file_path.name}")
+        print(f"    -> {INFO} creating draft: {file_path.name}")
 
         try:
             metadata = {
@@ -56,22 +61,23 @@ def main():
                 "is_dead": False,
                 "type": ["draft"],
                 "summary": "",
-                "word_count_goal": int(word_count_goal),
+                "word_count_goal": word_count_goal,
                 "word_count": 0,
             }
             write_markdown_file(file_path, metadata, "")
         except IOError as e:
-            print(f"    -> {FAILURE} issue creating file: {e}")
+            print(f"    -> {FAILURE} could not create draft: {e}")
             sys.exit(1)
     else:
-        print(f"    -> {INFO} draft: ++{file_path.name}")
+        print(f"    -> {INFO} opening draft: {file_path.name}")
+
 
 
     # open editor
     try:
         subprocess.call([EDITOR, str(file_path)])
     except FileNotFoundError:
-        print(f"    -> {FAILURE} could not find editor: '{EDITOR}'.")
+        print(f"    -> {FAILURE} editor not found: {EDITOR}")
         sys.exit(1)
 
     # post processing
@@ -92,9 +98,10 @@ def update_word_count(file_path):
         
         write_markdown_file(file_path, metadata, body)
         
-        print(f"    -> {INFO} words: {word_count}")
+        print(f"    -> {INFO} word count: {word_count}")
 
     except Exception as e:
+        print(f"    -> {FAILURE} could not update word count: {e}")
         print(f"    -> {FAILURE} issue updating word_count: {e}")
 
 
