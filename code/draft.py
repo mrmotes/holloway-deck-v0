@@ -44,13 +44,13 @@ def main():
 
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
-    filename_str = sanitize_filename(filename_str)
+    sanitized_filename = sanitize_filename(filename_str)
     word_count_goal = parsed_args.word_count_goal
 
-    if not filename_str.endswith(".md"):
-        filename_str += ".md"
+    if not sanitized_filename.endswith(".md"):
+        sanitized_filename += ".md"
 
-    file_path = drafts_layer.directory / filename_str
+    file_path = drafts_layer.directory / sanitized_filename
 
     # file creation
     if not file_path.exists() or file_path.stat().st_size == 0:
@@ -58,7 +58,7 @@ def main():
 
         try:
             metadata = {
-                "aliases": [],
+                "aliases": [filename_str],
                 "afterlife": None,
                 "is_dead": False,
                 "type": ["draft"],
