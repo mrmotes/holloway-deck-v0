@@ -65,13 +65,9 @@ def main():
 
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
-    sanitized_filename = sanitize_filename(filename_str)
-    requires_alias = sanitized_filename != filename_str
+    sanitized_filename, requires_alias = sanitize_filename(filename_str)
     
     word_count_goal = parsed_args.word_count_goal
-
-    if not sanitized_filename.endswith(".md"):
-        sanitized_filename += ".md"
 
     file_path = drafts_layer.directory / sanitized_filename
 

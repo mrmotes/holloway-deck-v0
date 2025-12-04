@@ -132,11 +132,15 @@ LAYERS = {
 
 # --- UTILITY FUNCTIONS ---
 
-def sanitize_filename(text: str) -> str:
-    """Convert text to a safe markdown filename."""
+def sanitize_filename(text: str) -> tuple:
+    """Convert text to a safe markdown filename. Returns (filename, requires_alias)."""
     safe = re.sub(r'[^a-z0-9]', '-', text.lower()).strip('-')
     safe = re.sub(r'-+', '-', safe)
-    return safe + ".md"
+    base = safe
+    if not base.endswith(".md"):
+        base += ".md"
+    requires_alias = (text != safe and text != base.replace(".md", ""))
+    return base, requires_alias
 
 
 def is_not_dead(file: Path) -> bool:
