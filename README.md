@@ -4,14 +4,7 @@ The cyberdeck system now supports dynamic layers. You can compile from any lower
 
 ## QUICK START
 
-Compile drafts to scenes (original behavior):
-```bash
-python scene_compile.py
-# OR
-python compile.py drafts scenes
-```
-
-Compile scenes to chapters (new):
+Compile scenes to chapters:
 ```bash
 python compile.py scenes chapters
 ```
@@ -30,21 +23,21 @@ To add a new layer (e.g., "parts", "books", "series"), edit `helpers.py`:
 
 ```python
 LAYERS = {
-    "drafts": LayerConfig("drafts", DRAFTS_DIR, DRAFT_TEMPLATE_PATH),
-    "scenes": LayerConfig("scenes", SCENES_DIR, TEMPLATE_PATH),
-    "chapters": LayerConfig("chapters", CHAPTERS_DIR, Path(os.path.expanduser("~/.local/templates/chapter_template.md"))),
-    "parts": LayerConfig("parts", Path(os.path.expanduser("~/writing/parts")), Path(os.path.expanduser("~/.local/templates/part_template.md"))),
+    "drafts": LayerConfig("drafts", "~/writing/drafts", "~/.local/templates/draft_template.md"),
+    "scenes": LayerConfig("scenes", "~/writing/scenes", "~/.local/templates/scene_template.md"),
+    "chapters": LayerConfig("chapters", "~/writing/chapters", "~/.local/templates/chapter_template.md"),
+    "LAYER_NAME": LayerConfig("LAYER_NAME", "~/writing/LAYER_NAME", "~/.local/templates/LAYER_NAME_template.md")
 }
 ```
 
-3. Create the template file at `~/.local/templates/part_template.md`
+3. Create the template file at `~/.local/templates/LAYER_NAME_template.md`
 
 ## LAYER HIERARCHY
 
 Layers are ordered. You can only compile FROM a lower layer TO a higher layer:
 
 ```
-drafts → scenes → chapters → parts → books → series
+drafts → scenes → chapters → (etc.)
 ```
 
 Each layer can reference its parent using the "afterlife" field in YAML frontmatter:
@@ -55,11 +48,13 @@ afterlife: "[[parent_item_name]]"
 ## METADATA FIELDS
 
 Each layer file uses these YAML fields:
-- `is_dead`: true/false (marks as consumed)
+- `aliases`: list (alternative names for the file)
 - `afterlife`: "[[parent_name]]" (links to parent)
-- `word_count`: integer (auto-updated after editing)
-- `word_count_goal`: integer (target word count)
+- `is_dead`: true/false (marks as consumed)
+- `type`: list (draft, scene, chapter, etc.)
 - `summary`: string (short description)
+- `word_count_goal`: integer (target word count)
+- `word_count`: integer (auto-updated after editing)
 
 ## TEMPLATE VARIABLES
 
@@ -78,21 +73,21 @@ The system provides fallback names:
 
 1. Edit `helpers.py` and add:
 ```python
-PARTS_DIR = Path(os.path.expanduser("~/writing/parts"))
-
 # In LAYERS dict:
-"parts": LayerConfig("parts", PARTS_DIR, Path(os.path.expanduser("~/.local/templates/part_template.md"))),
+"parts": LayerConfig("parts", "~/writing/parts", "~/.local/templates/part_template.md"),
 ```
 
 2. Create `~/.local/templates/part_template.md`:
 ```markdown
 ---
-title: {PART_TITLE}
-summary: {SUMMARY}
-word_count: {WORD_COUNT}
-word_count_goal: {WORD_COUNT_GOAL}
-is_dead: false
+aliases: 
 afterlife: ""
+is_dead: false
+type:
+  - part
+summary: {SUMMARY}
+word_count_goal: {WORD_COUNT_GOAL}
+word_count: {WORD_COUNT}
 ---
 
 # {PART_TITLE}
@@ -115,7 +110,6 @@ The `unarchive.py` script works with any layer:
 ## FILES
 
 - `compile.py` - Main compilation script (dynamic, layer-agnostic)
-- `scene_compile.py` - Legacy wrapper for drafts→scenes (backward compatible)
-- `writing_draft.py` - Create new draft files
-- `unarchive.py` - Restore archived items
+- `draft.py` - Create new draft files
+- `unarchive.py` - Decompile and restore archived items
 - `helpers.py` - Shared utilities and layer definitions
