@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 # bin/draft - wrapper to call the project's `draft.py`
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlink to find actual location of this script
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT" ]; do
+  SCRIPT="$(readlink "$SCRIPT")"
+done
+DIR="$(cd "$(dirname "$SCRIPT")" && pwd)"
 python3 "$DIR/../code/draft.py" "$@"
