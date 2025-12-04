@@ -212,7 +212,7 @@ def compile_layers(source_layer, target_layer):
         print(f"opening {final_filename} in nvim...")
         subprocess.call(["nvim", str(final_path)])
     else:
-        print(f"{INFO} {target_layer.name} compile complete!")
+        print(f"    -> {INFO} {target_layer.name} compile complete!")
 
 
 def main():
