@@ -111,7 +111,7 @@ class LayerConfig:
     
     def select_file(self, multi: bool = False, prompt: str = None) -> list:
         """fzf-based selection of live files in this layer."""
-        from .helpers import select_items_fzf  # avoid circular import if used from other scripts
+        from helpers import select_items_fzf  # absolute import for script usage
         files = self.get_files(exclude_dead=True)
         if not files:
             print(f"    -> {WARNING} no live {self.name} files found")
