@@ -44,12 +44,11 @@ def main():
 
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
+    filename_str = sanitize_filename(filename_str)
     word_count_goal = parsed_args.word_count_goal
 
     if not filename_str.endswith(".md"):
         filename_str += ".md"
-
-    filename_str = sanitize_filename(filename_str)
 
     file_path = drafts_layer.directory / filename_str
 
