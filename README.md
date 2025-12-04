@@ -20,6 +20,56 @@ This project contains the following files:
 - `unarchive.py` - Decompile and restore archived items
 - `helpers.py` - Shared utilities, layer definitions, and YAML structure
 
+## Install
+
+If you want shell commands (like `draft`, `compile`, and `unarchive`) available after cloning on a headless DietPi, this repository includes a small `bin/` directory with simple wrapper scripts and an installer.
+
+Install steps (recommended):
+
+```bash
+git clone <repo-url> ~/holloway-deck
+cd ~/holloway-deck
+./install.sh
+# ensure ~/.local/bin is in your PATH, then run:
+draft <args>
+```
+
+What `install.sh` does:
+- Makes `bin/*` executable
+- Creates `~/.local/bin` if needed
+- Creates symlinks from `~/.local/bin/<command>` to the wrapper scripts in `bin/`
+
+- Wrappers use a relative path to the repository, so they work regardless of where you clone the repo.
+- You can modify wrappers locally on the Pi if you prefer absolute paths.
+- If you prefer a Python-native install, consider packaging the project and exposing `console_scripts` entry points.
+Wrapper design notes:
+- Wrappers use a relative path to the repository, so they work regardless of where you clone the repo.
+- You can modify wrappers locally on the Pi if you prefer absolute paths.
+- If you prefer a Python-native install, consider packaging the project and exposing `console_scripts` entry points.
+
+Recommended defaults & environment overrides
+- Preferred local clone: `~/holloway-deck` (matches GitHub repo name)
+- Configuration directory (XDG): `~/.config/holloway-deck` by default — put `secrets.json` here
+- You can override the install base with environment variable `HOLLOWAY_HOME` (example: `export HOLLOWAY_HOME="$HOME/holloway-deck"`)
+- You can override config directory with `HOLLOWAY_CONFIG_DIR` or by setting `XDG_CONFIG_HOME`
+
+Examples:
+
+```bash
+# clone into recommended location
+git clone https://github.com/mrmotes/holloway-deck.git ~/holloway-deck
+cd ~/holloway-deck
+./install.sh
+
+# or override location and config at runtime
+export HOLLOWAY_HOME="$HOME/code/holloway-deck"
+export HOLLOWAY_CONFIG_DIR="$HOME/.config/holloway-deck"
+draft --help
+```
+- Wrappers use a relative path to the repository, so they work regardless of where you clone the repo.
+- You can modify wrappers locally on the Pi if you prefer absolute paths.
+- If you prefer a Python-native install, consider packaging the project and exposing `console_scripts` entry points.
+
 ## Layers 
 ### Hierarchy
 Layers are simply a hierarchical structure for my longform writing. They are ordered. You can only compile **FROM** a lower layer **TO** a higher layer:
