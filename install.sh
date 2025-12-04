@@ -2,7 +2,7 @@
 set -euo pipefail
 # install.sh - make wrappers executable and install symlinks to ~/.local/bin
 
-# Colors
+# colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
