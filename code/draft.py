@@ -44,7 +44,7 @@ def main():
 
     # default values
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
-    word_count_goal = parsed_args.word_count
+    word_count_goal = parsed_args.word_count_goal
 
     if not filename_str.endswith(".md"):
         filename_str += ".md"
