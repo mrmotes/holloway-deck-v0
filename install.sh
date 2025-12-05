@@ -16,9 +16,6 @@ TARGET_DIR="$HOME/.local/bin"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${YELLOW}✦${RESET} ${GREEN}holloway-deck${RESET} ${YELLOW}✦${RESET}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo ""
-echo -e "${YELLOW}data is power. Your words, your world.${RESET}"
-echo ""
 
 echo -e "${YELLOW}→${RESET} decentralizing infrastructure..."
 chmod +x "$BIN_DIR"/* || true
@@ -27,10 +24,10 @@ echo ""
 
 echo -e "${YELLOW}→${RESET} building from ${BLUE}$TARGET_DIR${RESET}"
 mkdir -p "$TARGET_DIR"
-echo -e "${GREEN}✓${RESET} node ready"
+echo -e "${GREEN}✓${RESET} source ready"
 echo ""
 
-echo -e "${YELLOW}→${RESET} wiring the network..."
+echo -e "${YELLOW}→${RESET} wiring network..."
 for f in "$BIN_DIR"/*; do
   cmd_name=$(basename "$f")
   ln -sf "$f" "$TARGET_DIR/$cmd_name"

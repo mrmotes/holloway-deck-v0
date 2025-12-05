@@ -1,0 +1,12 @@
+# TODO
+- Expand README with examples/screenshots
+- Add confirmation prompts for destructive actions
+- CLI search/filter by metadata/tags/content
+- Generate stats/reports (word count, progress)
+- Allow editor config via env or config file
+- Add unit tests for helpers and core logic
+- Add integration tests for full workflows
+- Expand CLI help and add `--version`/`--about`
+- Support batch operations
+- Standardize error handling and consider logging
+- Test cross-platform compatibility
