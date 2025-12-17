@@ -1,5 +1,9 @@
 # Holloway v0.1 – DietPi writerDeck (Cage + Alacritty)
-Holloway is a writerDeck designed for total focus. This first iteration was built with a lot of hardware that I had on hand as a proof of concept. 
+Holloway is a writerDeck designed for total focus. This first iteration was built with a lot of hardware that I had on hand as a proof of concept. This is a summary of that journey and this code base. I was "bad" and didn't document this as I was doing it, so I am doing my best here to remember all the nuance and roadblocks I hit along the way.
+
+> [!WARNING]
+> This document is a work in progress and will be updated as I can get to it. The latest update was made on `2025-12-05 10:00 CDT`.
+
 ## Requirements
 ### Hardware
 - Computer: Raspberry Pi 4 Model B (aarch64)
@@ -7,7 +11,8 @@ Holloway is a writerDeck designed for total focus. This first iteration was buil
 - Keyboard: Keychron K3 Version 2, 75% Layout 84 Keys Ultra-Slim
 
 > [!TIP]
-> This was the only monitor I had available. I would **highly** recommend a monitor that is much smaller. My ideal size would be around 10.1 inches.
+> A 27" monitor is too big for a writerDeck, but it's what I had available. I would recommend something significantly smaller, like 10.1".
+
 ### System
 - DietPi v9.19.2
 - `cage` Wayland kiosk compositor
@@ -16,35 +21,25 @@ Holloway is a writerDeck designed for total focus. This first iteration was buil
 - `neovim`: text editor of choice
 
 > [!NOTE]
-> This is the set up I followed. I planned on starting with DietPi _only_ before I switched to wanting a more "modern" CLI-like experience. You can probably just use the Raspberry Pi OS as a base, but don't take my word for it!
+> DietPi is what I happened to be using, and you may be able to do all of this with minimal changes using the Raspberry Pi OS, but please note that this document will not cover that.
+
 ## Installation
 ### DietPi
-Flash the DietPi image to your microSD card and insert it into the device. Connect your keyboard and monitor, then power on. Follow the initial DietPi setup steps:
-- Change Passwords: Set the root password and the "Global Software Password."
-- DietPi-Config: Set your timezone, keyboard layout, and Wi-Fi credentials (if not using Ethernet).
-- DietPi-Software: When the software list appears, select OpenSSH Client and OpenSSH Server (optional, but helpful for setup).
-- Install: Select "Install" to download the base system updates and apply changes. The system will reboot.
+[How to install DietPi](https://dietpi.com/docs/install/)
 
 ### Core packages
-Install `cage`, `alacritty`, and `wlr-randr` (optional). Log in as `root` and update the package repositories:
+Update package repositories and install `cage`, `alacritty`, and `wlr-randr` (optional):
 ```bash
-apt update
-```
-
-Install the compositor, terminal, and text editor:
-```bash
+sudo apt update
 sudo apt install cage alacritty neovim
 ```
 
-Create a dedicated non-root user for the writing environment:
+If you haven't already, create a dedicated non-root user for the writing environment, and add this user to the necessary groups:
 ```bash
 adduser your_username
-```
-
-Add this user to the necessary groups:
-```bash
 usermod -aG video,input,render writer
 ```
+
 ## Configuration
 ### Alacritty
 Switch to the new user to manage configuration files:
@@ -59,7 +54,8 @@ nvim ~/.config/alacritty/alacritty.yml
 ```
 
 > [!NOTE]
-> Since I am using DietPi, I am creating a YAML configuration file for Alacritty instead of a TOML file.
+> Since I am using DietPi, I am creating a YAML configuration file for Alacritty instead of a TOML file (which I believe is what is "preferred" these days).
+
 Define the window, font, and color settings in `alacritty.yml`. The following is what I am using at the moment, but feel free to tweak this to your heart's content:
 
 ```yml
@@ -105,30 +101,14 @@ colors:
 ### Auto-launch
 
 > [!NOTE]
-> There is a simple option within the  `dietpi-config` settings to set up a custom script with autologin. While this was quick and easy, I much preferred being asked to log in on boot and the ability to "logout" whenever I wanted to step away from my machine. To handle this, I updated my user `~/.profile` and created a shell script called `~/start_deck.sh`.
-> You will also notice a file named `~/display_transform.sh` within the start deck script. This is optional. I have a monitor that is rotated vertically and so I needed to add a script to handle this transformation.
+> There is a simple option within the  `dietpi-config` settings to set up a custom script with autologin. While this was quick and easy, I much prefer manual login and the ability to "logout" whenever I want.
 
-- `~/display_transform.sh` will handle the rotation of alacritty for setups that have a vertical monitor
-- `~/start_deck.sh` will handle loading `cage`, display rotation via `~/display_transform.sh`, as well as providing a "kill switch" mechanism for logging out
+- `~/start_deck.sh` will load `cage` with `alacritty`, run `~/display_transform.sh` if it exists, and provide a "kill switch" mechanism for logging out
+- `~/display_transform.sh` will handle the rotation of the alacritty UI for setups that have a vertical monitor
 - `~/.profile` will handle the running of `~/start_deck.sh` upon logging in to the physical device (not SSH)
 
-**OPTIONAL**: Create a sell script in your home folder to rotate the screen and launch Alacritty (this is called by Cage). My file is called `display_transform.sh`:
+1. Start deck script
 
-```bash
-nvim ~/display_transform.sh
-```
-
-The DietPi uses `HDMI-A-1` as the default port and I need a rotation of `90` degrees:
-
-```bash
-#!/bin/bash
-
-# rotate the screen (targeting default Pi HDMI port)
-wlr-randr --output HDMI-A-1 --transform 90
-
-# launch alacritty
-exec alacritty
-```
 Create a shell script in your home folder to automatically load up Alacritty after log-in.
 ```bash
 #!/bin/bash
@@ -140,28 +120,21 @@ export MOZ_ENABLE_WAYLAND=1
 
 # infinite loop with a 'kill_switch' mechanism
 while [ ! -f /tmp/kill_switch ]; do
-        cage -s -- /home/paul/display_transform.sh
-        sleep 1
+    # run display transform if script exists
+    if [ -x ~/display_transform.sh ]; then
+        ~/display_transform.sh
+    fi
+
+    # launch cage with alacritty
+    cage -s -- alacritty
+    sleep 1
 done
 
 # clean up the 'kill_switch' file
 rm -f /tmp/kill_switch
 ```
 
-The `/tmp/kill_switch` is a security measure to ensure I don't accidentally hit the `exit` command for Alacritty without meaning to. This ensures that the Alacritty loop will remain until I create a temporary file named `kill_switch`:
-
-```bash
-touch /tmp/kill_switch
-```
-
-Once that temporary file has been created, the system will then accept the `exit` commandL
-
-```bash
-exit
-```
-
-At this point, Alacritty will close and the system will automatically logout.
-
+2. Update user profile
 
 Modify your user profile to automatically trigger the deck setup when logging into the main physical screen (TTY1). For me, this was located at `~/.profile` but it could be listed as `~/.bash_profile`:
 
@@ -180,17 +153,45 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
     logout
 fi
 ```
+3. Display transform (optional)
+Create a sell script in your home folder to rotate the alacritty UI. Feel free to name this whatever you like, but make sure the `~/start_deck.sh` references that same filename:
 
+```bash
+nvim ~/display_transform.sh
+```
 
+The DietPi uses `HDMI-A-1` as the default port and I need a rotation of `90` degrees:
 
-Make `start_deck.sh` executable:
+```bash
+#!/bin/bash
+
+# rotate the screen (targeting default Pi HDMI port)
+wlr-randr --output HDMI-A-1 --transform 90
+```
+4. Make scripts executable:
 
 ```bash
 chmod +x ~/start_deck.sh
-```
-
-Make `display_transform.sh` executable:
-
-```bash
+# optional: only if you created this file
 chmod +x ~/display_transform.sh
 ```
+
+## Reboot and test
+
+Now comes the fun part! Once this is complete, you will want to reboot your machine:
+
+```bash
+sudo reboot
+```
+If all went well, you should see your DietPi login prompt as before, but when you login `alacritty` should launch as a fullscreen "application." To logout, simply create the "kill switch" temporary file and then enter the exit command:
+
+```bash
+touch /tmp/kill_switch
+```
+The `/tmp/kill_switch` is a security measure to ensure I don't accidentally hit the `exit` command for Alacritty without meaning to. This ensures that the Alacritty loop will remain until this file is created. Once that temporary file has been created, the system will then accept the `exit` commandL
+
+```bash
+exit
+```
+
+At this point, Alacritty will close and the system will automatically logout.
