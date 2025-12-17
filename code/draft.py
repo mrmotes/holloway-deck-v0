@@ -64,6 +64,10 @@ def main():
         sys.exit(0)
 
     # default values
+    #TODO - update this so that it always prefixes the filename with the date
+    # today = datetime.date.today().isoformat()
+    # filename_str = today + parsed_args.filename if parsed_args.filename else today
+
     filename_str = parsed_args.filename or datetime.date.today().isoformat()
     sanitized_filename, requires_alias = sanitize_filename(filename_str)
     
